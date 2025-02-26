@@ -100,17 +100,17 @@ const (
 type AttributeName string
 
 const (
-	MaxHealth           AttributeName = "generic.max_health"
-	MaxAbsorbtion                     = "generic.max_absorption"
-	FollowRange                       = "generic.follow_range"
-	KnockbackResistance               = "generic.knockback_resistance"
-	MovementSpeed                     = "generic.movement_speed"
-	AttackDamage                      = "generic.attack_damage"
-	Armor                             = "generic.armor"
-	ArmorToughness                    = "generic.armor_toughness"
-	AttackKnockback                   = "generic.attack_knockback"
-	AttackSpeed                       = "generic.attack_speed"
-	Luck                              = "generic.luck"
+	MaxHealth           AttributeName = "max_health"
+	MaxAbsorbtion                     = "max_absorption"
+	FollowRange                       = "follow_range"
+	KnockbackResistance               = "knockback_resistance"
+	MovementSpeed                     = "movement_speed"
+	AttackDamage                      = "attack_damage"
+	Armor                             = "armor"
+	ArmorToughness                    = "armor_toughness"
+	AttackKnockback                   = "attack_knockback"
+	AttackSpeed                       = "attack_speed"
+	Luck                              = "luck"
 )
 
 type Difficulty string

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"minecraftgo/commands"
 	"minecraftgo/secrets"
@@ -34,7 +35,9 @@ func startGame(res http.ResponseWriter, req *http.Request) {
 	fmt.Println("Using Token", code)
 
 	wpr := setupMinecraftServer()
-	setupWebsocket(code, wpr)
+	go setupWebsocket(code, wpr)
+
+	io.WriteString(res, "<html><body><div>Server is starting</div></body></html>")
 }
 
 func setupMinecraftServer() *wrapper.Wrapper {
@@ -61,6 +64,7 @@ func setupWebsocket(code string, wpr *wrapper.Wrapper) {
 	twitch.SubscribeToEvent(conn, "channel.chat.message", authToken)
 
 	gameOver := false
+	player_name := "tibretS"
 
 	for !gameOver {
 		_, data, err := conn.Conn.Read(conn.Context)
@@ -80,10 +84,41 @@ func setupWebsocket(code string, wpr *wrapper.Wrapper) {
 		} else if metadata.Metadata.MessageType == twitch.Notification {
 			payload := twitch.GetMessageText(data)
 
-			commands.Tell(wpr, "tibretS", payload)
+			commands.Tell(wpr, player_name, payload)
 
 			if payload == "skeleton" {
-				commands.SummonMob(wpr, "tibretS", commands.Skeleton)
+				commands.SummonMob(wpr, player_name, commands.Skeleton)
+			} else if payload == "teleport" {
+				commands.TeleportRandom(wpr, player_name, commands.NewVec3(50, 10, 50))
+			} else if payload == "clearskies" {
+				commands.SetWeather(wpr, commands.Clear)
+			} else if payload == "rain" {
+				commands.SetWeather(wpr, commands.Rain)
+			} else if payload == "damage" {
+				commands.Damage(wpr, player_name, 10)
+			} else if payload == "gofast" {
+				attribute_id := uuid.NewString()
+				commands.Attribute(wpr, player_name, commands.MovementSpeed, attribute_id, 2)
+			} else if payload == "slowdown" {
+				attribute_id := uuid.NewString()
+				commands.Attribute(wpr, player_name, commands.MovementSpeed, attribute_id, 0.5)
+			} else if payload == "levelup" {
+				commands.AddLevels(wpr, player_name, 10)
+			} else if payload == "glow" {
+				commands.SetEffect(wpr, player_name, commands.Glowing, 10, 1, false)
+			} else if payload == "silktouch" {
+				commands.Enchant(wpr, player_name, commands.SilkTouch, 1)
+			} else if payload == "kill" {
+				commands.Kill(wpr, player_name)
+			} else if payload == "suitup" {
+				commands.Give(wpr, player_name, []string{"minecraft:diamond_pickaxe",
+					"minecraft:diamond_boots",
+					"minecraft:diamond_helmet",
+					"minecraft:diamond_shovel",
+					"minecraft:diamond_axe",
+					"minecraft:diamond_sword",
+					"minecraft:diamond_chestplate",
+					"minecraft:diamond_leggings"})
 			}
 
 			if payload == "quit" {

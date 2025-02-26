@@ -8,6 +8,29 @@ import (
 	"strings"
 )
 
+type vec3 struct {
+	X float64
+	Y float64
+	Z float64
+}
+
+func NewVec3(x float64, y float64, z float64) vec3 {
+	nv := vec3{X: x, Y: y, Z: z}
+	return nv
+}
+
+func (vec *vec3) mul(mulby *vec3) {
+	vec.X = vec.X * mulby.X
+	vec.Y = vec.Y * mulby.Y
+	vec.Z = vec.Z * mulby.Z
+}
+
+func (vec *vec3) add(addby *vec3) {
+	vec.X = vec.X + addby.X
+	vec.Y = vec.Y + addby.Y
+	vec.Z = vec.Z + addby.Z
+}
+
 func SummonMob(wpr *wrapper.Wrapper, player_name string, mob_name Mob) {
 	//get the location of the player
 	cmd := fmt.Sprintf("/data get entity %s Pos", player_name)
@@ -44,8 +67,8 @@ func Damage(wpr *wrapper.Wrapper, player_name string, amount int) {
 	wpr.SendCommand(cmd)
 }
 
-func Attribute(wpr *wrapper.Wrapper, player_name string, attribute AttributeName, uuid string, name string, modifier float64) {
-	cmd := fmt.Sprintf("/attribute %s %s modifier add %s %s %.2f", player_name, attribute, uuid, name, modifier)
+func Attribute(wpr *wrapper.Wrapper, player_name string, attribute AttributeName, uuid string, modifier float64) {
+	cmd := fmt.Sprintf("/attribute %s %s modifier add %s %.2f add_multiplied_base", player_name, attribute, uuid, modifier)
 	fmt.Println("Running command --> ", cmd)
 	wpr.SendCommand(cmd)
 }
@@ -63,7 +86,7 @@ func SetEffect(wpr *wrapper.Wrapper, player_name string, effect Effect, seconds 
 }
 
 func Enchant(wpr *wrapper.Wrapper, player_name string, enchantment Enchantment, level int) {
-	cmd := fmt.Sprintf("/enchant %s minecraft:enchantment:%s %d", player_name, enchantment, level)
+	cmd := fmt.Sprintf("/enchant %s minecraft:%s %d", player_name, enchantment, level)
 	fmt.Println("Running command --> ", cmd)
 	wpr.SendCommand(cmd)
 }
@@ -80,7 +103,15 @@ func Kill(wpr *wrapper.Wrapper, player_name string) {
 	wpr.SendCommand(cmd)
 }
 
-func TeleportRandom(wpr wrapper.Wrapper, player_name string, x_max float64, y_max float64, z_max float64) {
+func Give(wpr *wrapper.Wrapper, player_name string, items []string) {
+	for _, item := range items {
+		cmd := fmt.Sprintf("/give %s %s", player_name, item)
+		fmt.Println("Running command --> ", cmd)
+		wpr.SendCommand(cmd)
+	}
+}
+
+func TeleportRandom(wpr *wrapper.Wrapper, player_name string, maxVec vec3) {
 	//get the location of the player
 	cmd := fmt.Sprintf("/data get entity %s Pos", player_name)
 	fmt.Println("Running command --> ", cmd)
@@ -104,16 +135,18 @@ func TeleportRandom(wpr wrapper.Wrapper, player_name string, x_max float64, y_ma
 		fpos[idx] = fp
 	}
 
-	//add randomness
-	dir := randDirection()
-	fpos[0] = fpos[0] + (rand.Float64() * x_max * dir)
-	dir = randDirection()
-	fpos[1] = fpos[1] + (rand.Float64() * y_max * dir)
-	dir = randDirection()
-	fpos[2] = fpos[2] + (rand.Float64() * z_max * dir)
+	//setup vectors
+	posVec := NewVec3(fpos[0], fpos[1], fpos[2])
+	dirVec := NewVec3(randDirection(), randDirection(), randDirection())
+	moveVec := NewVec3(rand.Float64(), rand.Float64(), rand.Float64())
+
+	//vector math
+	moveVec.mul(&maxVec) //get total distance we're gonna move
+	moveVec.mul(&dirVec) //pick positive or negative movement
+	posVec.add(&moveVec) //apply movement to current position
 
 	fmt.Println("Running command --> ", cmd)
-	cmd = fmt.Sprintf("/teleport %s %.6f %.6f %.6f", player_name, fpos[0], fpos[1], fpos[2])
+	cmd = fmt.Sprintf("/teleport %s %.6f %.6f %.6f", player_name, posVec.X, posVec.Y, posVec.Z)
 	fmt.Println("Response to command <--", res)
 	wpr.SendCommand(cmd)
 
